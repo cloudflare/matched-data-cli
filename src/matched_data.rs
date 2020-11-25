@@ -14,7 +14,7 @@ type Aead = ChaCha20Poly1305;
 type Kdf = HkdfSha256;
 type Kex = <Kem as KemTrait>::Kex;
 
-const ENCRYPTION_FORMAT_VERSION: u8 = 1;
+const ENCRYPTION_FORMAT_VERSION: u8 = 2;
 
 #[derive(Serialize, Deserialize)]
 pub struct EncryptedData {

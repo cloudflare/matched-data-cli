@@ -182,7 +182,7 @@ mod tests {
         let matched_data = "test matched data";
         // Encrypted with public key:
         // Ycig/Zr/pZmklmFUN99nr+taURlYItL91g+NcHGYpB8=
-        let encrypted_matched_data = "AdfVn7odpamJGeFAGj0iW2oTtoXOjVnTFT2x4l+cHKJsEQAAAAAAAAB+zDygjV2aUI92FV4cHMkp+4u37JHnH4fUkRqasPYaCgk=";
+        let encrypted_matched_data = "Ah0Ax4UEtSQg/bVSJHcgIwbLoNNKGbcwpL2BdCPJEYx1EQAAAAAAAAAsrRpY63jVlKash1iJ2bYh6+TQtedI380nnmZAWYgZMIU=";
         let private_key = "uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=";
 
         // Private key in argument
@@ -218,7 +218,7 @@ mod tests {
 
     #[test]
     fn test_arguments() {
-        let encrypted_matched_data = "AdfVn7odpamJGeFAGj0iW2oTtoXOjVnTFT2x4l+cHKJsEQAAAAAAAAB+zDygjV2aUI92FV4cHMkp+4u37JHnH4fUkRqasPYaCgk=";
+        let encrypted_matched_data = "Ah0Ax4UEtSQg/bVSJHcgIwbLoNNKGbcwpL2BdCPJEYx1EQAAAAAAAAAsrRpY63jVlKash1iJ2bYh6+TQtedI380nnmZAWYgZMIU=";
         let private_key = "uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=";
 
         let mut cmd = Command::cargo_bin("matched-data-cli").unwrap();
