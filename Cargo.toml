@@ -1,6 +1,6 @@
 [package]
 name = "matched-data-cli"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Miguel de Moura <mdemoura@cloudflare.com>"]
 description = "Tool to interact with the firewall matched data feature"
 edition = "2018"
