@@ -1,13 +1,11 @@
 #![warn(rust_2018_idioms)]
 
-mod matched_data;
-
-use crate::matched_data::{
-    decrypt_data, deserialize_encrypted_data, generate_key_pair, get_private_key_from_bytes,
-};
 use clap::Clap;
 use hpke::kex::Serializable;
-use serde::{Deserialize, Serialize};
+use matched_data::{
+    decrypt_data, deserialize_encrypted_data, generate_key_pair, get_private_key_from_bytes,
+    KeyPair,
+};
 use std::io::{stdin, stdout, Write};
 use std::str;
 
@@ -80,12 +78,6 @@ enum Command {
 
     /// Decrypts data
     Decrypt(DecryptOptions),
-}
-
-#[derive(Serialize, Deserialize)]
-struct KeyPair {
-    private_key: String,
-    public_key: String,
 }
 
 fn run(options: Options) -> Result<(), String> {

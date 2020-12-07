@@ -17,6 +17,12 @@ type Kex = <Kem as KemTrait>::Kex;
 const ENCRYPTION_FORMAT_VERSION: u8 = 2;
 
 #[derive(Serialize, Deserialize)]
+pub struct KeyPair {
+    pub private_key: String,
+    pub public_key: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct EncryptedData {
     encapped_key: EncappedKey<Kex>,
     ciphertext: Vec<u8>,
