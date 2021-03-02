@@ -44,11 +44,11 @@ enum DecryptOutputFormat {
 
 #[derive(Clap)]
 struct DecryptOptions {
-    #[clap(short = "d", long, about = "Base64 encoded encrypted matched data")]
+    #[clap(short = 'd', long, about = "Base64 encoded encrypted matched data")]
     matched_data: String,
 
     #[clap(
-        short = "k",
+        short = 'k',
         long,
         about = "Base64 encoded private key",
         conflicts_with = "private-key-stdin"
@@ -58,7 +58,7 @@ struct DecryptOptions {
     #[clap(
         long,
         about = "Whether to read the private key from stdin",
-        required_unless = "private-key"
+        required_unless_present = "private-key"
     )]
     private_key_stdin: bool,
 
