@@ -12,7 +12,7 @@ Tool to interact with the firewall matched data feature.
 
 ## Usage
 
-```
+``` plain
 USAGE:
     matched-data-cli <SUBCOMMAND>
 
@@ -39,13 +39,13 @@ $ matched-data-cli generate-key-pair
 To decrypt an encrypted matched data blob:
 
 ``` shell
-$ matched-data-cli decrypt -d AdfVn7odpamJGeFAGj0iW2oTtoXOjVnTFT2x4l+cHKJsEQAAAAAAAAB+zDygjV2aUI92FV4cHMkp+4u37JHnH4fUkRqasPYaCgk= -k $PRIVATE_KEY
+$ matched-data-cli decrypt -d AzTY6FHajXYXuDMUte82wrd+1n5CEHPoydYiyd3FMg5IEQAAAAAAAAA0lOhGXBclw8pWU5jbbYuepSIJN5JohTtZekLliJBlVWk= -k $PRIVATE_KEY
 test matched data
 ```
 
 or using stdin, for example:
 
 ``` shell
-$ printf $PRIVATE_KEY | matched-data-cli decrypt -d AdfVn7odpamJGeFAGj0iW2oTtoXOjVnTFT2x4l+cHKJsEQAAAAAAAAB+zDygjV2aUI92FV4cHMkp+4u37JHnH4fUkRqasPYaCgk= --private-key-stdin
+$ printf $PRIVATE_KEY | matched-data-cli decrypt -d AzTY6FHajXYXuDMUte82wrd+1n5CEHPoydYiyd3FMg5IEQAAAAAAAAA0lOhGXBclw8pWU5jbbYuepSIJN5JohTtZekLliJBlVWk= --private-key-stdin
 test matched data
 ```
