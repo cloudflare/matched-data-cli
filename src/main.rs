@@ -1,10 +1,10 @@
 #![warn(rust_2018_idioms)]
 
 mod matched_data;
+#[cfg(feature = "blob_legacy_version")]
+mod matched_data_legacy;
 
-use crate::matched_data::{
-    decrypt_data, deserialize_encrypted_data, generate_key_pair, get_private_key_from_bytes,
-};
+use crate::matched_data::generate_key_pair;
 use clap::Clap;
 use hpke::kex::Serializable;
 use serde::{Deserialize, Serialize};
@@ -123,19 +123,50 @@ fn run(options: Options) -> Result<(), String> {
             let private_key_bytes = radix64::STD
                 .decode(&private_key_base64)
                 .map_err(|_| "Provided private key is not base64 encoded")?;
-            let private_key = get_private_key_from_bytes(&private_key_bytes)
-                .map_err(|_| "Provided private key is invalid")?;
 
-            // Validate and construct encrypted matched data from input
             let encrypted_matched_data_bytes = radix64::STD
                 .decode(&command.matched_data)
                 .map_err(|_| "Provided matched data is not base64 encoded")?;
-            let encrypted_matched_data = deserialize_encrypted_data(&encrypted_matched_data_bytes)
-                .map_err(|_| "Provided matched data is invalid")?;
 
-            // Decrypt matched data
-            let matched_data = decrypt_data(&encrypted_matched_data, &private_key)
-                .map_err(|_| "Failed to decrypt matched data")?;
+            macro_rules! decrypt {
+                ($modname:ident) => {{
+                    use $modname::{
+                        decrypt_data, deserialize_encrypted_data, get_private_key_from_bytes,
+                    };
+
+                    let private_key = get_private_key_from_bytes(&private_key_bytes)
+                        .map_err(|_| "Provided private key is invalid")?;
+
+                    // Validate and construct encrypted matched data from input
+                    let encrypted_matched_data =
+                        deserialize_encrypted_data(&encrypted_matched_data_bytes)
+                            .map_err(|_| "Provided matched data is invalid")?;
+
+                    // Decrypt matched data
+                    decrypt_data(&encrypted_matched_data, &private_key)
+                        .map_err(|_| "Failed to decrypt matched data")?
+                }};
+            };
+
+            // Get encryption version
+            let encryption_format_version = encrypted_matched_data_bytes[0];
+            let matched_data = match encryption_format_version {
+                #[cfg(feature = "blob_legacy_version")]
+                2 => decrypt!(matched_data_legacy),
+                3 => decrypt!(matched_data),
+                _ => {
+                    let available_versions = if cfg!(features = "blob_legacy_version") {
+                        "'2' or '3'"
+                    } else {
+                        "'3'"
+                    };
+
+                    return Err(format!(
+                        "Encryption format not supported, expected {}, got '{}'",
+                        available_versions, encryption_format_version
+                    ));
+                }
+            };
 
             match command.output_format {
                 DecryptOutputFormat::Raw => {
@@ -179,6 +210,46 @@ mod tests {
 
     #[test]
     fn test_decrypt() {
+        let matched_data = "test matched data";
+        // Encrypted with public key:
+        // Ycig/Zr/pZmklmFUN99nr+taURlYItL91g+NcHGYpB8=
+        let encrypted_matched_data = "AzTY6FHajXYXuDMUte82wrd+1n5CEHPoydYiyd3FMg5IEQAAAAAAAAA0lOhGXBclw8pWU5jbbYuepSIJN5JohTtZekLliJBlVWk=";
+        let private_key = "uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=";
+
+        // Private key in argument
+        let mut cmd = Command::cargo_bin("matched-data-cli").unwrap();
+        let out = cmd
+            .args(&["decrypt", "-d", encrypted_matched_data, "-k", private_key])
+            .output()
+            .unwrap();
+
+        assert_eq!(
+            format!("{}\n", matched_data),
+            str::from_utf8(&out.stdout).unwrap()
+        );
+
+        // Private key in stdin
+        cmd = Command::cargo_bin("matched-data-cli").unwrap();
+        let out = cmd
+            .args(&[
+                "decrypt",
+                "-d",
+                encrypted_matched_data,
+                "--private-key-stdin",
+            ])
+            .write_stdin(private_key)
+            .output()
+            .unwrap();
+
+        assert_eq!(
+            format!("{}\n", matched_data),
+            str::from_utf8(&out.stdout).unwrap()
+        );
+    }
+
+    #[test]
+    #[cfg(feature = "blob_legacy_version")]
+    fn test_decrypt_legacy() {
         let matched_data = "test matched data";
         // Encrypted with public key:
         // Ycig/Zr/pZmklmFUN99nr+taURlYItL91g+NcHGYpB8=
