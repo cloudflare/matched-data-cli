@@ -1,12 +1,11 @@
 use bincode::ErrorKind;
-use hpke::{
+use hpke_legacy::{
     aead::{AeadTag, ChaCha20Poly1305},
     kdf::HkdfSha256,
     kem::X25519HkdfSha256,
     kex::{Deserializable, KeyExchange},
     setup_receiver, EncappedKey, HpkeError, Kem as KemTrait, OpModeR,
 };
-use rand::{rngs::StdRng, SeedableRng};
 use serde::{Deserialize, Serialize};
 
 type Kem = X25519HkdfSha256;
@@ -19,15 +18,6 @@ pub struct EncryptedData {
     encapped_key: EncappedKey<Kex>,
     ciphertext: Vec<u8>,
     tag: AeadTag<Aead>,
-}
-
-// Generates a public-private key pair
-pub fn generate_key_pair() -> (
-    <Kex as KeyExchange>::PrivateKey,
-    <Kex as KeyExchange>::PublicKey,
-) {
-    let mut csprng = StdRng::from_entropy();
-    Kem::gen_keypair(&mut csprng)
 }
 
 // Constructs a PrivateKey from an array of bytes
