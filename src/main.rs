@@ -1,8 +1,6 @@
 #![warn(rust_2018_idioms)]
 
 mod matched_data;
-#[cfg(feature = "blob_legacy_version")]
-mod matched_data_legacy;
 
 use crate::matched_data::generate_key_pair;
 use clap::Clap;
@@ -146,20 +144,14 @@ fn run(options: Options) -> Result<(), String> {
                     decrypt_data(&encrypted_matched_data, &private_key)
                         .map_err(|_| "Failed to decrypt matched data")?
                 }};
-            };
+            }
 
             // Get encryption version
             let encryption_format_version = encrypted_matched_data_bytes[0];
             let matched_data = match encryption_format_version {
-                #[cfg(feature = "blob_legacy_version")]
-                2 => decrypt!(matched_data_legacy),
                 3 => decrypt!(matched_data),
                 _ => {
-                    let available_versions = if cfg!(features = "blob_legacy_version") {
-                        "'2' or '3'"
-                    } else {
-                        "'3'"
-                    };
+                    let available_versions = "'3'";
 
                     return Err(format!(
                         "Encryption format not supported, expected {}, got '{}'",
@@ -214,46 +206,6 @@ mod tests {
         // Encrypted with public key:
         // Ycig/Zr/pZmklmFUN99nr+taURlYItL91g+NcHGYpB8=
         let encrypted_matched_data = "AzTY6FHajXYXuDMUte82wrd+1n5CEHPoydYiyd3FMg5IEQAAAAAAAAA0lOhGXBclw8pWU5jbbYuepSIJN5JohTtZekLliJBlVWk=";
-        let private_key = "uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=";
-
-        // Private key in argument
-        let mut cmd = Command::cargo_bin("matched-data-cli").unwrap();
-        let out = cmd
-            .args(&["decrypt", "-d", encrypted_matched_data, "-k", private_key])
-            .output()
-            .unwrap();
-
-        assert_eq!(
-            format!("{}\n", matched_data),
-            str::from_utf8(&out.stdout).unwrap()
-        );
-
-        // Private key in stdin
-        cmd = Command::cargo_bin("matched-data-cli").unwrap();
-        let out = cmd
-            .args(&[
-                "decrypt",
-                "-d",
-                encrypted_matched_data,
-                "--private-key-stdin",
-            ])
-            .write_stdin(private_key)
-            .output()
-            .unwrap();
-
-        assert_eq!(
-            format!("{}\n", matched_data),
-            str::from_utf8(&out.stdout).unwrap()
-        );
-    }
-
-    #[test]
-    #[cfg(feature = "blob_legacy_version")]
-    fn test_decrypt_legacy() {
-        let matched_data = "test matched data";
-        // Encrypted with public key:
-        // Ycig/Zr/pZmklmFUN99nr+taURlYItL91g+NcHGYpB8=
-        let encrypted_matched_data = "Ah0Ax4UEtSQg/bVSJHcgIwbLoNNKGbcwpL2BdCPJEYx1EQAAAAAAAAAsrRpY63jVlKash1iJ2bYh6+TQtedI380nnmZAWYgZMIU=";
         let private_key = "uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=";
 
         // Private key in argument
