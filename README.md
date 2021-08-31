@@ -39,13 +39,19 @@ $ matched-data-cli generate-key-pair
 To decrypt an encrypted matched data blob:
 
 ``` shell
-$ matched-data-cli decrypt -d AzTY6FHajXYXuDMUte82wrd+1n5CEHPoydYiyd3FMg5IEQAAAAAAAAA0lOhGXBclw8pWU5jbbYuepSIJN5JohTtZekLliJBlVWk= -k $PRIVATE_KEY
+$ cat private_key.txt
+uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=
+$ cat matched_data.txt
+AzTY6FHajXYXuDMUte82wrd+1n5CEHPoydYiyd3FMg5IEQAAAAAAAAA0lOhGXBclw8pWU5jbbYuepSIJN5JohTtZekLliJBlVWk=
+$ matched-data-cli decrypt -k private_key.txt matched_data.txt
 test matched data
 ```
 
 or using stdin, for example:
 
 ``` shell
-$ printf $PRIVATE_KEY | matched-data-cli decrypt -d AzTY6FHajXYXuDMUte82wrd+1n5CEHPoydYiyd3FMg5IEQAAAAAAAAA0lOhGXBclw8pWU5jbbYuepSIJN5JohTtZekLliJBlVWk= --private-key-stdin
+$ cat private_key.txt
+uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=
+$ printf 'AzTY6FHajXYXuDMUte82wrd+1n5CEHPoydYiyd3FMg5IEQAAAAAAAAA0lOhGXBclw8pWU5jbbYuepSIJN5JohTtZekLliJBlVWk=' | matched-data-cli decrypt -k private_key.txt -
 test matched data
 ```

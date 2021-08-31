@@ -7,7 +7,7 @@ use clap::{ArgEnum, Clap};
 use hpke::kex::Serializable;
 use serde::{Deserialize, Serialize};
 use std::io::{stdin, stdout, Write};
-use std::str;
+use std::{fs, str};
 
 #[derive(Clap)]
 #[clap(author, version)]
@@ -42,23 +42,15 @@ enum DecryptOutputFormat {
 
 #[derive(Clap)]
 struct DecryptOptions {
-    #[clap(short = 'd', long, about = "Base64 encoded encrypted matched data")]
-    matched_data: String,
+    #[clap(about = "File containing the base64 encoded encrypted matched data")]
+    matched_data_filename: String,
 
     #[clap(
         short = 'k',
         long,
-        about = "Base64 encoded private key",
-        conflicts_with = "private-key-stdin"
+        about = "File containing the base64 encoded private key"
     )]
-    private_key: Option<String>,
-
-    #[clap(
-        long,
-        about = "Whether to read the private key from stdin",
-        required_unless_present = "private-key"
-    )]
-    private_key_stdin: bool,
+    private_key_filename: String,
 
     #[clap(
         arg_enum,
@@ -108,22 +100,26 @@ fn run(options: Options) -> Result<(), String> {
         }
         Command::Decrypt(command) => {
             // Validate and construct private key from input
-            let private_key_base64: String = if command.private_key_stdin {
+            let private_key_base64 = fs::read_to_string(command.private_key_filename)
+                .map_err(|_| "Failed to read private key from file")?;
+
+            let private_key_bytes = radix64::STD
+                .decode(&private_key_base64.trim_end())
+                .map_err(|_| "Provided private key is not base64 encoded")?;
+
+            // Validate and construct matched data from input
+            let matched_data_base64 = if command.matched_data_filename == "-" {
                 let mut buffer = String::new();
                 stdin()
                     .read_line(&mut buffer)
-                    .expect("Failed to read private key from stdin");
+                    .map_err(|_| "Failed to read matched data from stdin")?;
                 buffer
             } else {
-                command.private_key.unwrap()
+                fs::read_to_string(command.matched_data_filename)
+                    .map_err(|_| "Failed to read matched data from file")?
             };
-
-            let private_key_bytes = radix64::STD
-                .decode(&private_key_base64)
-                .map_err(|_| "Provided private key is not base64 encoded")?;
-
             let encrypted_matched_data_bytes = radix64::STD
-                .decode(&command.matched_data)
+                .decode(&matched_data_base64.trim_end())
                 .map_err(|_| "Provided matched data is not base64 encoded")?;
 
             macro_rules! decrypt {
@@ -135,7 +131,6 @@ fn run(options: Options) -> Result<(), String> {
                     let private_key = get_private_key_from_bytes(&private_key_bytes)
                         .map_err(|_| "Provided private key is invalid")?;
 
-                    // Validate and construct encrypted matched data from input
                     let encrypted_matched_data =
                         deserialize_encrypted_data(&encrypted_matched_data_bytes)
                             .map_err(|_| "Provided matched data is invalid")?;
@@ -187,6 +182,7 @@ fn main() -> Result<(), String> {
 mod tests {
     use super::*;
     use assert_cmd::Command;
+    use assert_fs::prelude::*;
 
     #[test]
     fn test_generate_key_pair() {
@@ -208,10 +204,23 @@ mod tests {
         let encrypted_matched_data = "AzTY6FHajXYXuDMUte82wrd+1n5CEHPoydYiyd3FMg5IEQAAAAAAAAA0lOhGXBclw8pWU5jbbYuepSIJN5JohTtZekLliJBlVWk=";
         let private_key = "uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=";
 
-        // Private key in argument
+        let temp_dir = assert_fs::TempDir::new().unwrap();
+        let encrypted_matched_data_file = temp_dir.child("encrypted_matched_data.txt");
+        encrypted_matched_data_file
+            .write_str(encrypted_matched_data)
+            .unwrap();
+        let private_key_file = temp_dir.child("private_key.txt");
+        private_key_file.write_str(private_key).unwrap();
+
+        // Matched data key in file
         let mut cmd = Command::cargo_bin("matched-data-cli").unwrap();
         let out = cmd
-            .args(&["decrypt", "-d", encrypted_matched_data, "-k", private_key])
+            .args(&[
+                "decrypt",
+                "-k",
+                private_key_file.path().to_str().unwrap(),
+                encrypted_matched_data_file.path().to_str().unwrap(),
+            ])
             .output()
             .unwrap();
 
@@ -220,16 +229,16 @@ mod tests {
             str::from_utf8(&out.stdout).unwrap()
         );
 
-        // Private key in stdin
+        // Matched data key in stdin
         cmd = Command::cargo_bin("matched-data-cli").unwrap();
         let out = cmd
             .args(&[
                 "decrypt",
-                "-d",
-                encrypted_matched_data,
-                "--private-key-stdin",
+                "-k",
+                private_key_file.path().to_str().unwrap(),
+                "-",
             ])
-            .write_stdin(private_key)
+            .write_stdin(encrypted_matched_data)
             .output()
             .unwrap();
 
@@ -237,31 +246,7 @@ mod tests {
             format!("{}\n", matched_data),
             str::from_utf8(&out.stdout).unwrap()
         );
-    }
 
-    #[test]
-    fn test_arguments() {
-        let encrypted_matched_data = "Ah0Ax4UEtSQg/bVSJHcgIwbLoNNKGbcwpL2BdCPJEYx1EQAAAAAAAAAsrRpY63jVlKash1iJ2bYh6+TQtedI380nnmZAWYgZMIU=";
-        let private_key = "uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=";
-
-        let mut cmd = Command::cargo_bin("matched-data-cli").unwrap();
-
-        // '--private-key <private-key>' requires a value but none was supplied
-        cmd.args(&["decrypt", "-d", "-k", private_key]).unwrap_err();
-
-        // '--private-key <private-key>' requires a value but none was supplied
-        cmd.args(&["decrypt", "-d", encrypted_matched_data, "-k"])
-            .unwrap_err();
-
-        // '--private-key <private-key>' cannot be used with '--private-key-stdin'
-        cmd.args(&[
-            "decrypt",
-            "-d",
-            encrypted_matched_data,
-            "-k",
-            private_key,
-            "private-key-stdin",
-        ])
-        .unwrap_err();
+        temp_dir.close().unwrap();
     }
 }
