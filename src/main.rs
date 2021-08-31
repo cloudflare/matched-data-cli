@@ -3,7 +3,7 @@
 mod matched_data;
 
 use crate::matched_data::generate_key_pair;
-use clap::Clap;
+use clap::{ArgEnum, Clap};
 use hpke::kex::Serializable;
 use serde::{Deserialize, Serialize};
 use std::io::{stdin, stdout, Write};
@@ -16,7 +16,7 @@ struct Options {
     command: Command,
 }
 
-#[derive(Clap)]
+#[derive(ArgEnum)]
 enum KeyPairOutputFormat {
     Json,
 }
@@ -34,7 +34,7 @@ struct GenerateKeyPairOptions {
     output_format: KeyPairOutputFormat,
 }
 
-#[derive(Clap)]
+#[derive(ArgEnum)]
 enum DecryptOutputFormat {
     Raw,
     Utf8Lossy,

@@ -45,14 +45,14 @@ pub fn decrypt_data(
     // Decapsulate and derive the shared secret. Create a shared AEAD context.
     let mut aead_ctx = setup_receiver::<Aead, Kdf, Kem>(
         &OpModeR::Base,
-        &private_key,
+        private_key,
         &encrypted_data.encapped_key,
         &[],
     )?;
 
     // Decrypt ciphertext in place
     let mut ciphertext_copy = encrypted_data.ciphertext.to_vec();
-    aead_ctx.open(&mut ciphertext_copy, &[], &&encrypted_data.tag)?;
+    aead_ctx.open(&mut ciphertext_copy, &[], &encrypted_data.tag)?;
 
     // Rename for clarity
     let plaintext = ciphertext_copy;
