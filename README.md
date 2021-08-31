@@ -1,6 +1,8 @@
 # Matched Data CLI
 
-Tool to interact with the firewall matched data feature.
+Tool to interact with the Firewall matched data feature.
+
+Additional documentation about the feature can be found on the [Cloudflare docs](https://developers.cloudflare.com/waf/managed-rulesets/payload-logging) and related [blog post](https://blog.cloudflare.com/using-hpke-to-encrypt-request-payloads/).
 
 ## Setup
 
