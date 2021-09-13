@@ -51,7 +51,7 @@ pub fn decrypt_data(
     )?;
 
     // Decrypt ciphertext in place
-    let mut ciphertext_copy = encrypted_data.ciphertext.to_vec();
+    let mut ciphertext_copy = encrypted_data.ciphertext.clone();
     aead_ctx.open(&mut ciphertext_copy, &[], &encrypted_data.tag)?;
 
     // Rename for clarity
