@@ -3,7 +3,7 @@ name = "matched-data-cli"
 version = "0.5.0"
 authors = ["Miguel de Moura <mdemoura@cloudflare.com>"]
 description = "Tool to interact with the firewall matched data feature"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 assert_cmd = "2.0.0"
