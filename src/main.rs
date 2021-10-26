@@ -3,25 +3,25 @@
 mod matched_data;
 
 use crate::matched_data::generate_key_pair;
-use clap::{ArgEnum, Clap};
+use clap::{ArgEnum, Parser};
 use hpke::kex::Serializable;
 use serde::{Deserialize, Serialize};
 use std::io::{stdin, stdout, Write};
 use std::{fs, str};
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(author, version)]
 struct Options {
     #[clap(subcommand)]
     command: Command,
 }
 
-#[derive(ArgEnum)]
+#[derive(ArgEnum, Clone)]
 enum KeyPairOutputFormat {
     Json,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct GenerateKeyPairOptions {
     #[clap(
         arg_enum,
@@ -34,13 +34,13 @@ struct GenerateKeyPairOptions {
     output_format: KeyPairOutputFormat,
 }
 
-#[derive(ArgEnum)]
+#[derive(ArgEnum, Clone)]
 enum DecryptOutputFormat {
     Raw,
     Utf8Lossy,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 struct DecryptOptions {
     #[clap(about = "File containing the base64 encoded encrypted matched data")]
     matched_data_filename: String,
@@ -63,7 +63,7 @@ struct DecryptOptions {
     output_format: DecryptOutputFormat,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 enum Command {
     /// Generates a public-private key pair
     GenerateKeyPair(GenerateKeyPairOptions),
