@@ -501,7 +501,6 @@ dependencies = [
  "assert_fs",
  "bincode",
  "clap",
- "generic-array",
  "hpke",
  "radix64",
  "rand",
