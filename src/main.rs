@@ -4,7 +4,7 @@ mod matched_data;
 
 use crate::matched_data::generate_key_pair;
 use clap::{ArgEnum, Parser};
-use hpke::kex::Serializable;
+use hpke::Serializable;
 use serde::{Deserialize, Serialize};
 use std::io::{stdin, stdout, Write};
 use std::{fs, str};
