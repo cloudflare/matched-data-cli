@@ -3,8 +3,7 @@ use hpke::{
     aead::{AeadTag, ChaCha20Poly1305},
     kdf::HkdfSha256,
     kem::X25519HkdfSha256,
-    kex::{Deserializable, KeyExchange},
-    setup_receiver, EncappedKey, HpkeError, Kem as KemTrait, OpModeR,
+    setup_receiver, Deserializable, HpkeError, Kem as KemTrait, OpModeR,
 };
 use rand::{rngs::StdRng, SeedableRng};
 use serde::{Deserialize, Serialize};
@@ -12,35 +11,33 @@ use serde::{Deserialize, Serialize};
 type Kem = X25519HkdfSha256;
 type Aead = ChaCha20Poly1305;
 type Kdf = HkdfSha256;
-type Kex = <Kem as KemTrait>::Kex;
+
+type PrivateKey = <Kem as KemTrait>::PrivateKey;
+type PublicKey = <Kem as KemTrait>::PublicKey;
+type EncappedKey = <Kem as KemTrait>::EncappedKey;
 
 #[derive(Serialize, Deserialize)]
 pub struct EncryptedData {
-    encapped_key: EncappedKey<Kex>,
+    encapped_key: EncappedKey,
     ciphertext: Vec<u8>,
     tag: AeadTag<Aead>,
 }
 
 // Generates a public-private key pair
-pub fn generate_key_pair() -> (
-    <Kex as KeyExchange>::PrivateKey,
-    <Kex as KeyExchange>::PublicKey,
-) {
+pub fn generate_key_pair() -> (PrivateKey, PublicKey) {
     let mut csprng = StdRng::from_entropy();
     Kem::gen_keypair(&mut csprng)
 }
 
 // Constructs a PrivateKey from an array of bytes
-pub fn get_private_key_from_bytes(
-    private_key_bytes: &[u8],
-) -> Result<<Kex as KeyExchange>::PrivateKey, HpkeError> {
-    <Kex as KeyExchange>::PrivateKey::from_bytes(private_key_bytes)
+pub fn get_private_key_from_bytes(private_key_bytes: &[u8]) -> Result<PrivateKey, HpkeError> {
+    PrivateKey::from_bytes(private_key_bytes)
 }
 
 // Decrypts data with provided private key
 pub fn decrypt_data(
     encrypted_data: &EncryptedData,
-    private_key: &<Kex as KeyExchange>::PrivateKey,
+    private_key: &PrivateKey,
 ) -> Result<Vec<u8>, HpkeError> {
     // Decapsulate and derive the shared secret. Create a shared AEAD context.
     let mut aead_ctx = setup_receiver::<Aead, Kdf, Kem>(
@@ -52,7 +49,7 @@ pub fn decrypt_data(
 
     // Decrypt ciphertext in place
     let mut ciphertext_copy = encrypted_data.ciphertext.clone();
-    aead_ctx.open(&mut ciphertext_copy, &[], &encrypted_data.tag)?;
+    aead_ctx.open_in_place_detached(&mut ciphertext_copy, &[], &encrypted_data.tag)?;
 
     // Rename for clarity
     let plaintext = ciphertext_copy;
