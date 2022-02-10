@@ -78,6 +78,8 @@ struct KeyPair {
     public_key: String,
 }
 
+const TRUNCATED: &str = "truncated";
+
 fn run(options: Options) -> Result<(), String> {
     match options.command {
         Command::GenerateKeyPair(command) => {
@@ -118,6 +120,14 @@ fn run(options: Options) -> Result<(), String> {
                 fs::read_to_string(command.matched_data_filename)
                     .map_err(|_| "Failed to read matched data from file")?
             };
+
+            if matched_data_base64 == TRUNCATED {
+                return Err(
+                    "The payload match for this event is unavailable because it was too large."
+                        .to_string(),
+                );
+            };
+
             let encrypted_matched_data_bytes = radix64::STD
                 .decode(&matched_data_base64.trim_end())
                 .map_err(|_| "Provided matched data is not base64 encoded")?;
@@ -246,7 +256,32 @@ mod tests {
             format!("{}\n", matched_data),
             str::from_utf8(&out.stdout).unwrap()
         );
+        temp_dir.close().unwrap();
+    }
 
+    #[test]
+    fn test_decrypt_truncation() {
+        let private_key = "uBS5eBttHrqkdY41kbZPdvYnNz8Vj0TvKIUpjB1y/GA=";
+
+        let temp_dir = assert_fs::TempDir::new().unwrap();
+        let encrypted_matched_data_file = temp_dir.child("encrypted_matched_data.txt");
+        encrypted_matched_data_file.write_str(TRUNCATED).unwrap();
+        let private_key_file = temp_dir.child("private_key.txt");
+        private_key_file.write_str(private_key).unwrap();
+        let mut cmd = Command::cargo_bin("matched-data-cli").unwrap();
+        let out = cmd
+            .args(&[
+                "decrypt",
+                "-k",
+                private_key_file.path().to_str().unwrap(),
+                encrypted_matched_data_file.path().to_str().unwrap(),
+            ])
+            .output()
+            .unwrap();
+        assert_eq!(
+            format!("{}\n", "Error: \"The payload match for this event is unavailable because it was too large.\""),
+            str::from_utf8(&out.stderr).unwrap()
+        );
         temp_dir.close().unwrap();
     }
 }
