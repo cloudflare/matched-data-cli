@@ -501,7 +501,7 @@ dependencies = [
 
 [[package]]
 name = "matched-data-cli"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "assert_cmd",
  "assert_fs",
