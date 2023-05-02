@@ -21,6 +21,9 @@ USAGE:
 FLAGS:
     -h, --help       Prints help information
     -V, --version    Prints version information
+    decrypt -k, --private-key-filename    File containing the base64 encoded private key
+    decrypt -o, --output-format <format>    Output format of matched data [default: utf8-lossy] [possible values: raw, utf8-lossy]
+    generate-key-pair -o, --output-format <format>    Output format of key pair [default: json] [possible values: json]
 
 SUBCOMMANDS:
     decrypt              Decrypts data
