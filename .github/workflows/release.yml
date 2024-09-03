@@ -131,17 +131,17 @@ jobs:
           release_name: ${{ steps.get_version.outputs.VERSION }}
 
       - name: Download Linux tarball
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: linux
 
       - name: Download Windows tarball
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: windows
 
       - name: Download MacOS tarball
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: macos
 
